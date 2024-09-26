@@ -1,0 +1,262 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              09/26/2024 16:57:39 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          sbit rs = P2 ^ 0;
+   3          sbit en = P2 ^ 1;
+   4          sfr port_data = 0xB0;
+   5          sfr port_1 = 0x90;
+   6          sbit r1 = P1 ^ 0;
+   7          sbit r2 = P1 ^ 1;
+   8          sbit r3 = P1 ^ 2;
+   9          sbit r4 = P1 ^ 3;
+  10          sbit c1 = P1 ^ 4;
+  11          sbit c2 = P1 ^ 5;
+  12          sbit c3 = P1 ^ 6;
+  13          sbit c4 = P1 ^ 7;
+  14          void lcd_print(volatile long);
+  15          void calculateResult();
+  16          char findkey();
+  17          void delay(unsigned int);
+  18          void lcd_cmd(unsigned char);
+  19          void lcd_init();
+  20          void charDisplay(unsigned char);
+  21          void strDisplay(unsigned char *);
+  22          void calculateNumber(char);
+  23          unsigned int i;
+  24          char key, action;
+  25          void clearLcd();
+  26          int num1 = 0, num2 = 0, number = 0, result = 0;
+  27          /*------------------------------------Main Function-------------------------------------------------------
+             --------*/
+  28          void main()
+  29          {
+  30   1          lcd_init();
+  31   1          strDisplay("Calculator ");
+  32   1          lcd_cmd(0xC0);
+  33   1          strDisplay("Enter the values ");
+  34   1          delay(500000);
+  35   1          clearLcd();
+  36   1          while (1)
+  37   1          {
+  38   2              key = findkey();
+  39   2              calculateNumber(key);
+  40   2          }
+  41   1      }
+  42          /*------------------------------------LCD clear Function--------------------------------------------------
+             -------------*/
+  43          void clearLcd()
+  44          {
+  45   1          lcd_cmd(0x01);
+  46   1          lcd_cmd(0x80);
+  47   1      }
+  48          /*------------------------------------Delay Function------------------------------------------------------
+             ---------*/
+  49          void delay(unsigned int i)
+  50          {
+  51   1          unsigned int x;
+C51 COMPILER V9.60.7.0   MAIN                                                              09/26/2024 16:57:39 PAGE 2   
+
+  52   1          for (x = 0; x < i; x++)
+  53   1              ;
+  54   1      }
+  55          /*------------------------------------LCD Commands Function-----------------------------------------------
+             ----------------*/
+  56          void lcd_cmd(unsigned char cmd)
+  57          {
+  58   1          rs = 0; // cmd
+  59   1          port_data = cmd;
+  60   1          en = 1;
+  61   1          delay(1000);
+  62   1          en = 0;
+  63   1      }
+  64          /*------------------------------------Functions for LCD Print Characters ---------------------------------
+             ------------------------------*/
+  65          void charDisplay(unsigned char lcd_data)
+  66          {
+  67   1          rs = 1; // data
+  68   1          port_data = lcd_data;
+  69   1          en = 1;
+  70   1          delay(1000);
+  71   1          en = 0;
+  72   1          delay(1000);
+  73   1      }
+  74          /*------------------------------------LCD setup Function--------------------------------------------------
+             -------------*/
+  75          void lcd_init()
+  76          {
+  77   1          lcd_cmd(0x38); // 8 BIT MODE AND 2 LINE
+  78   1          lcd_cmd(0x0F); // display on and cursor on and blink on
+  79   1          lcd_cmd(0x01); // clear dispaly
+  80   1          lcd_cmd(0x80); // set cursor to first line
+  81   1      }
+  82          /*------------------------------------String Dispaly Function---------------------------------------------
+             ------------------*/
+  83          void strDisplay(unsigned char *str)
+  84          {
+  85   1          while (*str)
+  86   1              charDisplay(*str++);
+  87   1      }
+  88          /*------------------------------------Result Function-----------------------------------------------------
+             ----------*/
+  89          void calculateResult()
+  90          {
+  91   1          if (action == '+')
+  92   1              result = num1 + num2;
+  93   1          else if (action == '-')
+  94   1              result = num1 - num2;
+  95   1          else if (action == '*')
+  96   1              result = num1 * num2;
+  97   1          else if (action == '/' && (num2 != 0))
+  98   1              result = num1 / num2;
+  99   1          else
+ 100   1          {
+ 101   2              clearLcd();
+ 102   2              strDisplay("Inavalid Inputs");
+ 103   2              delay(90000);
+ 104   2              number = num1 = num2 = result = action = 0;
+ 105   2              clearLcd();
+ 106   2          }
+ 107   1          clearLcd();
+ 108   1          strDisplay("RESULT :");
+C51 COMPILER V9.60.7.0   MAIN                                                              09/26/2024 16:57:39 PAGE 3   
+
+ 109   1          lcd_cmd(0xC0);
+ 110   1          lcd_print(result);
+ 111   1          delay(60000);
+ 112   1          lcd_cmd(0x80);
+ 113   1          strDisplay("             ");
+ 114   1          lcd_cmd(0x80);
+ 115   1      }
+ 116          /*------------------------------------Number Print Function-----------------------------------------------
+             ----------------*/
+ 117          void lcd_print(volatile long printNumber)
+ 118          {
+ 119   1          volatile char i = 0, j, num[20], revNum[20], length = 0;
+ 120   1          if (printNumber < 0)
+ 121   1          {
+ 122   2              charDisplay('-');
+ 123   2              printNumber = ~printNumber + 1;
+ 124   2          }
+ 125   1          if (printNumber == 0)
+ 126   1          {
+ 127   2              charDisplay('0');
+ 128   2          }
+ 129   1      
+ 130   1          while (printNumber)
+ 131   1          {
+ 132   2              revNum[i++] = printNumber % 10;
+ 133   2              printNumber /= 10;
+ 134   2              length++;
+ 135   2          }
+ 136   1          length--;
+ 137   1      
+ 138   1          for (i = 0, j = length; i <= length; i++, j--)
+ 139   1          {
+ 140   2              num[i] = revNum[j] + '0';
+ 141   2          }
+ 142   1      
+ 143   1          for (i = 0; i <= length; i++)
+ 144   1          {
+ 145   2              charDisplay(num[i]);
+ 146   2          }
+ 147   1      }
+ 148          /*------------------------------------Calculatiing Number-------------------------------------------------
+             --------------*/
+ 149          void calculateNumber(char key)
+ 150          {
+ 151   1          charDisplay(key);
+ 152   1          if (key == '/' || key == '*' || key == '-' || key == '+')
+ 153   1          {
+ 154   2              if (result)
+ 155   2              {
+ 156   3                  num1 = result;
+ 157   3                  result = num2 = number = 0;
+ 158   3                  action = key;
+ 159   3              }
+ 160   2              else
+ 161   2              {
+ 162   3                  num1 = number;
+ 163   3                  number = 0;
+ 164   3                  action = key;
+ 165   3              }
+ 166   2          }
+ 167   1          else if (key == '=')
+ 168   1          {
+C51 COMPILER V9.60.7.0   MAIN                                                              09/26/2024 16:57:39 PAGE 4   
+
+ 169   2              num2 = number;
+ 170   2              number = 0;
+ 171   2              calculateResult();
+ 172   2          }
+ 173   1          else if (key == 'c')
+ 174   1          {
+ 175   2              number = num1 = num2 = result = action = 0;
+ 176   2              clearLcd();
+ 177   2          }
+ 178   1          else if (key >= '0' && key <= '9')
+ 179   1          {
+ 180   2      
+ 181   2              if (number == 0)
+ 182   2                  number = key - '0';
+ 183   2              else
+ 184   2                  number = (number * 10) + (key - '0');
+ 185   2          }
+ 186   1          delay(2000);
+ 187   1      }
+ 188          /*------------------------------------Finding Which key Pressed-------------------------------------------
+             --------------------*/
+ 189          char findkey() {
+ 190   1          while (1) {
+ 191   2              
+ 192   2              r1 = 0; r2 = r3 = r4 = 1; 
+ 193   2              if (c1 == 0) { delay(20000); while (c1 == 0); return '7'; } 
+ 194   2              if (c2 == 0) { delay(20000); while (c2 == 0); return '8'; } 
+ 195   2              if (c3 == 0) { delay(20000); while (c3 == 0); return '9'; } 
+ 196   2              if (c4 == 0) { delay(20000); while (c4 == 0); return '/'; } 
+ 197   2      
+ 198   2             
+ 199   2              r2 = 0; r1 = r3 = r4 = 1; 
+ 200   2              if (c1 == 0) { delay(20000); while (c1 == 0); return '4'; } 
+ 201   2              if (c2 == 0) { delay(20000); while (c2 == 0); return '5'; } 
+ 202   2              if (c3 == 0) { delay(20000); while (c3 == 0); return '6'; } 
+ 203   2              if (c4 == 0) { delay(20000); while (c4 == 0); return '*'; } 
+ 204   2      
+ 205   2              
+ 206   2              r3 = 0; r1 = r2 = r4 = 1;
+ 207   2              if (c1 == 0) { delay(20000); while (c1 == 0); return '1'; } 
+ 208   2              if (c2 == 0) { delay(20000); while (c2 == 0); return '2'; } 
+ 209   2              if (c3 == 0) { delay(20000); while (c3 == 0); return '3'; } 
+ 210   2              if (c4 == 0) { delay(20000); while (c4 == 0); return '-'; } 
+ 211   2      
+ 212   2              
+ 213   2              r4 = 0; r1 = r2 = r3 = 1; 
+ 214   2              if (c1 == 0) { delay(20000); while (c1 == 0); return 'c'; } 
+ 215   2              if (c2 == 0) { delay(20000); while (c2 == 0); return '0'; } 
+ 216   2              if (c3 == 0) { delay(20000); while (c3 == 0); return '='; } 
+ 217   2              if (c4 == 0) { delay(20000); while (c4 == 0); return '+'; } 
+ 218   2          }
+ 219   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    985    ----
+   CONSTANT SIZE    =     69    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12      51
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.60.7.0   MAIN                                                              09/26/2024 16:57:39 PAGE 5   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
